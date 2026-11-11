@@ -1,0 +1,501 @@
+====================================================================================================
+SIN BASE - PRIPREMA MATERIJALA ZA SRS (Specifikacija softverskih zahtjeva)
+====================================================================================================
+
+Namjena: Ovaj dokument sakuplja sve što je do sada poznato o projektu na jednom mjestu, da osoba
+koja piše SRS ne mora tražiti po porukama, slikama i dijagramima. Nije sam SRS, nego sirovi
+materijal složen tako da se može prepisati u SRS.
+
+Oznake koje se koriste u tekstu:
+  [POTVRĐENO]   - rekao član tima ili piše u dokumentu klijenta
+  [PRETPOSTAVKA] - zaključeno iz materijala, treba potvrditi
+  [OTVORENO]    - nije riješeno, vidi odjeljak 13
+
+Povezani fajlovi (priloženi uz ovaj dokument):
+  - Tabele_kalkulator_registracije.txt  (svih 16 tabela prepisanih u ASCII formi)
+  - Obrasci u PDF-u: Izjava_gubitak_police.pdf, Zahtjev_potvrda_bonus_malus.pdf,
+                     Zahtjev_povrat_neiskoristene_premije.pdf
+  - FiksneNaknade.txt, Proposal_za_projekat.docx, SIM-Base.vpp (Visual Paradigm), 3 fotografije
+    rukom pisanih bilješki sa razgovora sa klijentom
+
+
+====================================================================================================
+1. PROJEKAT U JEDNOJ SLICI
+====================================================================================================
+
+Naziv:       SIN Base
+Šta je:      Desktop aplikacija (JavaFX) za evidenciju stranaka i lakši svakodnevni rad
+             posredništva u osiguranju.
+Za koga:     Osiguranje "SIN", Travnik (Bosanska ulica). Posrednik za osiguravajuće kuće
+             ASA, EUROHERC i EUROS (prema proposalu).
+Problem:     Rad se danas obavlja papirom i olovkom i Excel tabelama starim preko 10 godina.
+             Cilj je to zamijeniti automatizovanim i lako upravljivim funkcijama.
+Ključno:     Aplikacija NE koristi internet. Sve (baza, front, back, kalkulacije) je unutar jednog
+             desktop sistema. [POTVRĐENO]
+Napomena:    Projekat je školska simulacija stvarnog razvoja softvera; nakon predaje se ne planira
+             dalje iterirati. [POTVRĐENO]
+
+Četiri modula:
+  1. Kalkulator registracije
+  2. Popunjavanje urnika/formulara (obrazaca)
+  3. Evidencija stranaka (baza) sa upozorenjima o isteku registracije
+  4. Postavke
+
+
+====================================================================================================
+2. ZAINTERESOVANE STRANE I TIM
+====================================================================================================
+
+Klijent (kontakt osoba):  Mirza Smailkadić, +387 62 513 165, smailkadic@gmail.com
+Krajnji korisnik:         radnik/posrednik u kancelariji klijenta ("Korisnik sistema" u use case
+                          dijagramu). Jedan tip korisnika. [POTVRĐENO prema VPP-u]
+
+Tim:
+  - Tašić Tajra       - dokumentacija i UI/UX dizajn
+  - Kolasević Amel    - frontend i project management (YouTrack)
+  - Kolasević Samer   - backend, arhitektura, komunikacija sa klijentom
+
+
+====================================================================================================
+3. OPSEG
+====================================================================================================
+
+U opsegu:
+  - Izračun cijene registracije vozila (putnička i teretna) iz zakonskih tabela i fiksnih naknada
+  - Popunjavanje tri uvedena obrasca i izlaz u PDF-u (štampa/kopiranje)
+  - Evidencija stranaka u tabeli (pregled, dodavanje, uređivanje, brisanje, pretraga, sortiranje)
+  - Obavještenja o isteku registracije (zadano 20 dana, podesivo)
+  - Postavke: fiksne naknade, prag upozorenja, dnevni/noćni režim
+  - Lokalna baza i rezervne kopije
+
+Van opsega / odluke o granicama:
+  - Nema servera, mreže ni sinhronizacije. [POTVRĐENO]
+  - Evidencija je NEZAVISNA od kalkulatora: cijena izračunata u kalkulatoru se ne prenosi
+    automatski u evidenciju; evidencija služi samo za pregled stranaka i upozorenja. [POTVRĐENO]
+  - Premija polise (tabela 16) računa se samo za putnička vozila, jer ih klijent najviše radi.
+    [POTVRĐENO]
+  - Vrste vozila moped, motocikl, prikolica i radna mašina postoje samo u evidenciji (da baza
+    bude šira); kalkulator za njih ne računa. [POTVRĐENO]
+
+
+====================================================================================================
+4. FUNKCIONALNI ZAHTJEVI (nacrt, sa ID oznakama za SRS)
+====================================================================================================
+
+4.1 Opšte
+  OPS-01  Glavni meni sa pločicama za module (nacrt sa razgovora pokazuje 5 pločica na ekranu).
+          [POTVRĐENO prema skici]
+  OPS-02  Obavještenja o isteku registracije prikazuju se u glavnom meniju (vidi EVD-10).
+
+4.2 Kalkulator registracije
+  KAL-01  Korisnik bira vrstu vozila: putničko ili teretno.
+  KAL-02  Korisnik bira pogon: dizel, benzin ili LPG/CNG/hibrid.
+  KAL-03  Za putničko vozilo korisnik unosi redom: kubikažu (padajuća lista raspona), kilovate,
+          godište.
+  KAL-04  Za teretno vozilo korisnik bira kategoriju N1/N2/N3, zatim unosi kilovate, kubikažu,
+          godište (redoslijed iz rukopisa). [OTVORENO: vidi pitanja 5 i 7]
+  KAL-05  Sistem računa cijenu registracije kao zbir komponenti iz odjeljka 5. [PRETPOSTAVKA]
+  KAL-06  Sistem prikazuje cijenu razloženu po stavkama i ukupno. [PRETPOSTAVKA]
+  KAL-07  Sistem omogućava ispis ponuđene cijene (use case "Ispis ponuđene cijene").
+  KAL-08  Posrednik ne treba koristiti tuđe kalkulatore (kalkulatore drugih osiguravajućih kuća
+          ili third-party alate): kalkulator mora pokriti kompletan izračun. [POTVRĐENO, proposal]
+
+4.3 Popunjavanje urnika (obrazaca)
+  OBR-01  Korisnik bira jedan od uvedenih obrazaca (trenutno 3, odjeljak 6).
+  OBR-02  Sistem prikazuje formu sa poljima odabranog obrasca.
+  OBR-03  Sistem generiše popunjen obrazac kao PDF spreman za štampu/kopiranje (use case
+          "Parser urnika").
+  OBR-04  Obrasci se uvode (kao šabloni) prije produkcije; korisnik ih u radu ne mijenja.
+          [POTVRĐENO, proposal]
+
+4.4 Evidencija stranaka
+  EVD-01  Prikaz svih zapisa u tabeli (zamjena za Excel).
+  EVD-02  Dodavanje novog zapisa.
+  EVD-03  Uređivanje zapisa.
+  EVD-04  Uvid u zapis.
+  EVD-05  Brisanje zapisa.
+  EVD-06  Izmjene se trajno upisuju tek na "Sačuvaj" (u tom trenutku izvršava se transakcija na
+          bazu). [POTVRĐENO, proposal]
+  EVD-07  Pretraga po broju police, imenu ili prezimenu. [POTVRĐENO, rukopis]
+  EVD-08  Sortiranje tabele. [POTVRĐENO, rukopis]
+  EVD-09  Red u tabeli se boji kada registracija ističe u narednih N dana (zadano 20).
+  EVD-10  U glavnom meniju prikazuje se obavještenje kome ističe registracija i kada; klikom na
+          obavještenje vidi se broj telefona stranke. [POTVRĐENO]
+
+4.5 Postavke
+  POS-01  Izmjena vrijednosti fiksnih naknada (naglasak na modularnosti). [POTVRĐENO, proposal]
+  POS-02  Izmjena praga upozorenja za istek registracije (zadano 20 dana).
+  POS-03  Dnevni ili noćni režim prikaza.
+
+
+====================================================================================================
+5. KALKULATOR REGISTRACIJE: DETALJNO
+====================================================================================================
+
+5.1 Tok unosa (rekonstrukcija iz rukopisa, tačka 1.1 - 1.5)
+
+  1.1 Vozilo je:  ( ) putničko   ( ) teretno
+  1.2 Pogon je:   ( ) dizel   ( ) benzin   ( ) LPG/hibrid
+  1.3 Kubikaža:   [padajuća lista]
+  1.4 Godište:    [unos]
+  1.5 Kilovati:   [padajuća lista]
+
+  PUTNIČKO:   vrsta -> pogon -> kubikaža -> kilovati -> godište
+  TERETNO:    vrsta -> pogon -> N1 / N2 / N3 -> kilovati -> kubikaža -> godište
+
+  Redoslijed pojavljivanja polja u rukopisu nije isti na dvije stranice; tačan redoslijed
+  treba potvrditi prilikom izrade prototipa. [OTVORENO]
+
+5.2 Komponente cijene
+
+  +-----------------------------+----------------------------------------------+-----------------+
+  | Komponenta                  | Izvor                                        | Status          |
+  +-----------------------------+----------------------------------------------+-----------------+
+  | Putarina ("porez")          | Tabele 1-8 (putnički, N1, N2, N3)            | POTVRĐENO       |
+  |                             | Tabele 9-11 (autobusi) postoje, ali nisu u   | OTVORENO        |
+  |                             | rukopisu                                     |                 |
+  | Zaštita okoline             | Tabele 12-15 (po zapremini, starosti, gorivu)| PRETPOSTAVKA    |
+  | Fiksne naknade              | odjeljak 5.3                                 | POTVRĐENO       |
+  | Polisa AO (procenat)        | Tabela 16 (kW x premijski razred), samo za   | PRETPOSTAVKA    |
+  |                             | putnička vozila                              |                 |
+  +-----------------------------+----------------------------------------------+-----------------+
+
+  Napomena: u rukopisu se stavke "putarina 1 i 2" (običan i plin/hibrid) i "porez (tabela)" javljaju
+  odvojeno, ali je potvrđeno da su porez i putarina iste tabele. [POTVRĐENO]
+
+5.3 Fiksne naknade (KM)
+
+  +--------------------------------+------------------+
+  | Naknada                        | Iznos            |
+  +--------------------------------+------------------+
+  | Taksa                          |  20              |
+  | Voda                           |  20              |
+  | Potvrda o vlasništvu           |   5              |
+  | Registarske tablice            |  20              |
+  | Stiker                         |   5              |
+  | Saobraćajna iskaznica          |   5              |
+  | Bankovna provizija             |  15              |
+  | Tehnički pregled               |  91              |
+  +--------------------------------+------------------+
+  | Zbir osam fiksnih naknada      | 181              |
+  +--------------------------------+------------------+
+  | AMK - putničko vozilo          |   9              |
+  | AMK - teretno vozilo           |  15              |
+  +--------------------------------+------------------+
+  | Fiksno ukupno, putničko        | 190  (181 + 9)   |
+  | Fiksno ukupno, teretno         | 196  (181 + 15)  |
+  +--------------------------------+------------------+
+
+  Proposal govori o "8 fiksnih naknada": to su osam stavki iznad, a AMK zavisi od vrste vozila.
+  Vrijednost AMK 9/15 potvrdio je član tima; fajl FiksneNaknade.txt (8/9) i rukopis (8/15) sadrže
+  starije vrijednosti i treba ih uskladiti. [POTVRĐENO]
+
+  Sve fiksne naknade moraju biti izmjenjive u Postavkama (POS-01).
+
+5.4 Indeks tabela (puni sadržaj je u Tabele_kalkulator_registracije.txt)
+
+  +-----+------------------------------------------------+----------------------------------------+
+  | Br. | Tabela                                         | Ključ za pretragu                      |
+  +-----+------------------------------------------------+----------------------------------------+
+  |  1  | Putarina: putnički automobili                  | zapremina (raspon, CM)                 |
+  |  2  | Putarina: putnički na LPG/CNG i hibridi        | zapremina (raspon, CM)                 |
+  |  3  | Putarina: teretna N1                           | najveća dopuštena masa (raspon, KG)    |
+  |  4  | Putarina: teretna N1 na LPG/CNG i hibridi      | najveća dopuštena masa                 |
+  |  5  | Putarina: teretna N2                           | najveća dopuštena masa                 |
+  |  6  | Putarina: teretna N3, dvije osovine            | najveća dopuštena masa                 |
+  |  7  | Putarina: teretna N3, tri osovine              | najveća dopuštena masa                 |
+  |  8  | Putarina: teretna N3, četiri i više osovina    | najveća dopuštena masa                 |
+  |  9  | Putarina: autobusi M2/M3, dvije osovine        | najveća dopuštena masa                 |
+  | 10  | Putarina: autobusi M2/M3, tri osovine          | najveća dopuštena masa                 |
+  | 11  | Putarina: autobusi M2/M3, četiri osovine       | najveća dopuštena masa                 |
+  | 12  | Putnički 251-750 CM                            | starost (8 razreda) x gorivo           |
+  | 13  | Putnički 751-1400 CM                           | starost x gorivo                       |
+  | 14  | Putnički 1401-2000 CM                          | starost x gorivo                       |
+  | 15  | Putnički 2001-4000 CM                          | starost x gorivo                       |
+  | 16  | AO premijska skupina 1, putnički automobili    | snaga motora (8 podskupina, kW) x      |
+  |     |                                                | premijski razred (P14 ... P1)          |
+  +-----+------------------------------------------------+----------------------------------------+
+
+  Tabele 1-11 imaju kolone "Ukupno", "60%" i "40%". Ukupno = 60% + 40%. [OTVORENO: koja se
+  vrijednost koristi u cijeni, i šta predstavljaju 60% i 40%]
+
+  Razredi starosti u tabelama 12-15: 0-5, 6-8, 9-10, 11-15, 16-20, 21-30, iznad 30 godina, te
+  zasebni red "iznad 30 (oldtajmeri)". Vrijednosti za dizel i benzin su u svim redovima iste.
+  [OTVORENO: značenje reda "oldtajmeri"]
+
+  Premijski razredi u tabeli 16: P14 (100) ... P7 (10) su malusi, P6 (0) je osnovni razred,
+  P5 (10) ... P1 (50) su bonusi. Svaka vrijednost = osnovni iznos (P6) x odgovarajući postotak.
+  [PRETPOSTAVKA, računski provjereno]
+
+  Sumnjive vrijednosti u izvornim tabelama navedene su na kraju fajla Tabele_kalkulator_registracije.txt.
+  Prije kodiranja treba provjeriti sa klijentom.
+
+5.5 Sedam promjenjivih vrijednosti
+
+  Proposal navodi 15 parametara: 8 fiksnih naknada i 7 promjenjivih diskretnih vrijednosti koje
+  čine redove i kolone "12 zakonski propisanih tabela". Isporučeno je 16 tabela. U SRS-u treba
+  nabrojati tih 7 promjenjivih vrijednosti. Kandidati iz materijala:
+    vrsta vozila, pogon, zapremina motora, najveća dopuštena masa / kategorija, kilovati, godište
+    (starost), premijski razred. [PRETPOSTAVKA]
+
+
+====================================================================================================
+6. OBRASCI (URNICI)
+====================================================================================================
+
+Sva tri obrasca su EUROS Osiguranja. Za ASA i EUROHERC obrasci nisu dostavljeni. [OTVORENO]
+Izlaz je PDF (use case "Parser urnika"). Čiste PDF verzije su u prilogu (A4, uspravno).
+
+6.1 Izjava o gubitku originalne police obaveznog osiguranja
+  Polja: ime i prezime; JMBG; adresa; broj police autoodgovornosti; period važenja police od - do;
+         osiguravajuće društvo koje je izdalo polisu; vrsta i tip vozila; broj šasije;
+         registarski broj; potpis ("Izjavu dao"); broj lične karte.
+  Tekst: izjava pod punom moralnom, materijalnom i krivičnom odgovornošću da je polisa izgubljena
+         pod neutvrđenim okolnostima.
+
+6.2 Zahtjev za izdavanje potvrde o stepenu Bonusa/Malusa
+  Polja: ime i prezime; adresa stanovanja; ID/JMB; kontakt telefon; broj police;
+         podaci o vozilu (vrsta, marka, tip, broj šasije, registarske oznake);
+         osiguravajuće društvo za koje se izdaje potvrda; mjesto i datum podnošenja; potpis.
+
+6.3 Zahtjev za povrat neiskorištene premije (Prilog 1, EUROS Osiguranje AD, Filijala Sarajevo)
+  Polja: osiguranik (ime, prezime, datum rođenja); adresa i telefon; datum;
+         broj polise autoodgovornosti; trajanje polise od - do; datum odjave vozila;
+         marka vozila i registarske oznake; razlog odjave (prodaja, mirovanje, rashodovanje,
+         uništenje); broj računa i naziv banke; broj polise AO (u izjavi); potpis podnosioca;
+         broj lične karte (uvid); ime i prezime radnika/zastupnika Euros osiguranja i potpis.
+  Prilozi (lista u obrascu): polisa AO i zeleni karton koja se raskida; polisa AO novog vlasnika
+         (kod prodaje); kopija vlasničke/potvrde o registraciji; kupoprodajni ugovor;
+         broj transakcijskog računa.
+  Zakonski osnov naveden u obrascu: čl. 45 st. 4 Zakona o obaveznim osiguranjima u prometu.
+
+Rukopis kaže da parser u suštini radi sa 3 urnika i gotovim podacima. [POTVRĐENO]
+Pitanje da li se polja predpopunjavaju iz Evidencije: [OTVORENO]
+
+
+====================================================================================================
+7. EVIDENCIJA: PODACI
+====================================================================================================
+
+7.1 Rječnik podataka: jedna tabela "Stranka" (odluka: ostaje jedna tabela) [POTVRĐENO]
+
+  +------------------------------+---------------+-----------+---------------------------------------+
+  | Polje                        | Tip           | Obavezno  | Napomena                              |
+  +------------------------------+---------------+-----------+---------------------------------------+
+  | broj polise                  | tekst (30)    | da        | primarni ključ, jedinstven            |
+  | Ime                          | tekst (50)    | da        |                                       |
+  | Prezime                      | tekst (60)    | da        |                                       |
+  | broj telefona                | tekst (20)    | ne        |                                       |
+  | Osiguravajuća kuća           | enum          | da        | vidi 7.2                              |
+  | vrsta vozila                 | enum          | da        | vidi 7.2                              |
+  | ime vozila                   | tekst (255)   | da        |                                       |
+  | početak trajanja registracije| datum         | da        |                                       |
+  | kraj registracije            | datum         | da        | osnova za obavještenja                |
+  | cijena registracije          | iznos (10)    | da        | unosi se ručno, ne iz kalkulatora     |
+  | napomena                     | tekst (255)   | ne        |                                       |
+  +------------------------------+---------------+-----------+---------------------------------------+
+
+  Tipovi su logični; tačna fizička preciznost iznosa nije definisana u dijagramu.
+  Primarni ključ je broj polise, pa se svaka nova polisa (npr. obnova) vodi kao novi zapis.
+  [OTVORENO: potvrditi da to klijentu odgovara]
+
+7.2 Enumeracije (iz ER dijagrama) [POTVRĐENO]
+
+  Osiguravajuća kuća                 Vrsta vozila
+  +------------+-----+               +------------------+-----+
+  | ASA        |  0  |               | Putničko vozilo  |  0  |
+  | EUROHERC   |  1  |               | Teretno vozilo   |  1  |
+  | EUROS      |  2  |               | Moped            |  2  |
+  | GRAWE      |  3  |               | Motocikl         |  3  |
+  | TRIGLAV    |  4  |               | Prikolica        |  4  |
+  +------------+-----+               | Radna mašina     |  5  |
+                                     +------------------+-----+
+
+  Napomena: proposal navodi samo tri osiguravajuće kuće (ASA, EUROHERC, EUROS), a enum ima i GRAWE i
+  TRIGLAV. [OTVORENO]
+
+7.3 Ponašanje obavještenja
+  - Prag je N dana prije "kraj registracije", zadano 20, mijenja se u Postavkama.
+  - U tabeli se red oboji; u glavnom meniju se prikaže obavještenje (ko i kada ističe).
+  - Klik na obavještenje otvara podatke stranke, uključujući broj telefona.
+  - Kada se obavještenje provjerava (pri pokretanju, periodično dok je aplikacija otvorena,
+    sistemska obavijest) - [OTVORENO]
+
+
+====================================================================================================
+8. USE CASE MODEL (iz VPP dijagrama "Use Case sistema")
+====================================================================================================
+
+Granica sistema: "SIN Base desktop aplikacija". Akter: "Korisnik sistema".
+
+  Korisnik sistema ----- Kalkulator registracija
+                              <<include>> Sistem za kalkulaciju
+                                              <<include>> Ispis ponuđene cijene
+  Korisnik sistema ----- Podsistem za popunjavanje urnika
+                              <<include>> Forma za popunjavanje odabranog urnika
+                                              <<include>> Parser urnika (daje PDF popunjenog urnika)
+  Korisnik sistema ----- Evidencija o registracijama stranki
+                              <<extend>> Notifikacioni sistem o isteku registracija
+                                         (Notifikacioni sistem proširuje Evidenciju)
+  Korisnik sistema ----- Postavke preferencija i zadanih vrijednosti
+
+Prijedlog za SRS: "Sistem za kalkulaciju" i "Parser urnika" su unutrašnje komponente, a ne ciljevi
+korisnika. U SRS-u ih imenovati glagolskim izrazima (npr. "Izračunati cijenu registracije",
+"Generisati PDF obrasca"). Korisnički ciljevi: izračunati cijenu, ispisati ponudu, popuniti i
+generisati obrazac, voditi evidenciju stranaka, primiti obavještenje o isteku, podesiti postavke.
+
+
+====================================================================================================
+9. ARHITEKTURA I DEPLOYMENT (dogovoreno u razgovoru)
+====================================================================================================
+
+Zahtjev: instalira se na uredski računar i radi potpuno sama, bez udaljenih servera. Baza je
+sastavni dio aplikacije. [POTVRĐENO]
+
+Odbačeno: Docker containeri i PostgreSQL iz prvog deployment dijagrama. [POTVRĐENO]
+
+Prijedlog (preporučen, nije konačna odluka):
+  - Paket: Windows instalacija (jpackage .msi/.exe) sa ugrađenim Java runtime-om (jlink);
+    moguća instalacija bez administratorskih prava (per-user).
+  - Baza: ugrađeni SQLite (jedan fajl, preko sqlite-jdbc); migracije šeme preko Flyway.
+    Enumi kao cijeli brojevi sa CHECK ograničenjem, datumi kao ISO-8601 tekst, iznosi kao cijeli
+    broj feninga.
+  - Lokacije: program u Program Files; podaci u %LOCALAPPDATA%\SinBase\ (sinbase.db, backups\, logs\).
+  - Sigurnost podataka: automatski backup pri zatvaranju (sa rotacijom), ručni izvoz/uvoz backupa,
+    provjera integriteta baze pri pokretanju, opciono enkripcija (SQLCipher).
+  - PDF: biblioteka za generisanje PDF-a (PDFBox ili OpenPDF), štampa preko Windows printera.
+  - Build: GitHub Actions na Windows runneru (jpackage ne pravi Windows installer na Linuxu).
+
+Ciljni računar (iz deployment dijagrama): Windows 10, Dell Optiplex, Intel i7 (8. gen ili novija),
+integrisana grafika, 8 GB RAM, 512 GB SSD, štampač priključen preko OS drajvera. [POTVRĐENO]
+
+Skica deploymenta:
+
+  [Uredski računar: Windows 10, 64-bit]
+   +-- [SIN Base (jpackage instalacija)]
+   |     +-- Java runtime (jlink) + JavaFX
+   |     +-- aplikacija: kalkulator, parser/obrasci, evidencija, postavke
+   |     +-- sqlite-jdbc  --->  %LOCALAPPDATA%\SinBase\sinbase.db
+   |                            %LOCALAPPDATA%\SinBase\backups\
+   +-- [Štampač] (preko Windows drajvera; PDF ili direktna štampa)
+
+
+====================================================================================================
+10. NEFUNKCIONALNI ZAHTJEVI (većina je prijedlog, treba potvrditi)
+====================================================================================================
+
+  NFR-01  Rad bez interneta i bez udaljenih servera. [POTVRĐENO]
+  NFR-02  Podaci se čuvaju lokalno u ugrađenoj bazi; gubitak podataka mora biti spriječen
+          rezervnim kopijama. [POTVRĐENO da je baza važna; mehanizam je PREDLOŽEN]
+  NFR-03  Operativni sistem: Windows 10, 64-bit. [prema deployment dijagramu]
+  NFR-04  Instalacija jednim instalerom, bez zasebne instalacije Jave. [PREDLOŽENO]
+  NFR-05  Modularnost: fiksne naknade i prag upozorenja mijenjaju se bez izmjene koda.
+          [POTVRĐENO, proposal]
+  NFR-06  Korisnički interfejs na bosanskom jeziku, sa ispravnim prikazom slova č, ć, š, đ, ž.
+          [PREDLOŽENO]
+  NFR-07  Dnevni i noćni režim prikaza. [POTVRĐENO, proposal]
+  NFR-08  Zaštita ličnih podataka stranaka (ime, telefon, JMBG u obrascima): lokalno čuvanje,
+          razmotriti zaštitu pristupa i/ili enkripciju. [PREDLOŽENO]
+  NFR-09  Tačnost izračuna: rezultati kalkulatora moraju se poklapati sa stvarnim primjerima
+          klijenta (test sa 10-20 poznatih slučajeva). [PREDLOŽENO]
+  NFR-10  Performanse i broj zapisa nisu definisani. [OTVORENO]
+
+
+====================================================================================================
+11. ORGANIZACIJA RADA (za dio SRS-a o ograničenjima)
+====================================================================================================
+
+  - Metodologija: razmatra se waterfall sa fazama (plan, zahtjevi, dizajn, arhitektura,
+    implementacija, testiranje, puštanje, održavanje). [RAZMATRA SE]
+  - Alati: YouTrack (zadaci), GitHub (kod), Figma (dizajn), IntelliJ (razvoj), Visual Paradigm
+    (dijagrami).
+  - Git tok: main -> dev -> feature/*. [POTVRĐENO]
+
+
+====================================================================================================
+12. ODLUKE DONESENE DO SADA
+====================================================================================================
+
+  1. Aplikacija je potpuno offline; sve unutar jednog desktop sistema.
+  2. Baza je jedna tabela (Stranka); evidencija je nezavisna od kalkulatora.
+  3. Porez u kalkulatoru su putarine tabele.
+  4. AMK: 9 KM putničko, 15 KM teretno.
+  5. Premija (tabela 16) računa se samo za putnička vozila.
+  6. Dodatne vrste vozila (moped, motocikl, prikolica, radna mašina) samo za evidenciju.
+  7. Pravo ime je SIN Base ("SIM" u VPP fajlu je tipfeler; isto "Printer Inteface").
+  8. Docker i PostgreSQL se ne koriste; aplikacija je samostalna instalacija sa ugrađenom bazom.
+  9. Obavještenja o isteku se prikazuju u glavnom meniju, uz pristup broju telefona.
+
+
+====================================================================================================
+13. OTVORENA PITANJA ZA KLIJENTA / TIM
+====================================================================================================
+
+   1. Putarina (tabele 1-11): koristi li se kolona "Ukupno" ili podjela 60%/40%, i šta ta podjela
+      znači?
+   2. Zaštita okoline: da li su to tabele 12-15? Vrijede li i za teretna vozila (tabele postoje
+      samo za putnička)?
+   3. Značenje reda "iznad 30 (oldtajmeri)" u tabelama 12-15 (1,35 / 1,43 / 1,50 / 1,80 KM): fiksni
+      iznos ili dodatak po godini?
+   4. Polisa ("procenat"): kako se bira premijski razred (P14-P1)? Unosi li ga korisnik ručno
+      (bonus/malus razred) i da li je iznos u KM?
+   5. Autobusi (tabele 9-11) i N3 po broju osovina (tabele 6-8): ulaze li u kalkulator? U rukopisu
+      se ne pominju, a enum vrste vozila nema autobus.
+   6. Teretna vozila: koja je uloga polja "kilovati", "kubikaža" i "godište" kada se putarina
+      traži po najvećoj dopuštenoj masi?
+   7. Tačan redoslijed polja u formi kalkulatora (vidi 5.1) i naziv trećeg pogona ("LPG/A" u
+      rukopisu: LPG/CNG ili hibrid?).
+   8. 7 promjenjivih vrijednosti iz proposala: tačan spisak. Proposal kaže 12 tabela, a isporučeno
+      je 16.
+   9. Obrasci: trebaju li i obrasci ASA i EUROHERC? Popunjavaju li se polja iz Evidencije ili ručno?
+  10. Osiguravajuće kuće u evidenciji: samo ASA/EUROHERC/EUROS ili i GRAWE i TRIGLAV?
+  11. Obnova registracije: primarni ključ je broj polise, pa obnova znači novi zapis. Odgovara li
+      to klijentu?
+  12. Obavještenja: kada i kako se prikazuju (pri pokretanju, periodično, sistemska obavijest)?
+  13. Mogu li se zakonske tabele mijenjati iz Postavki ili samo novom verzijom aplikacije?
+  14. Je li potrebna prijava korisnika (login), ili aplikaciju koristi jedna osoba bez lozinke?
+  15. Provjeriti sumnjive vrijednosti u tabelama (spisak na kraju Tabele_kalkulator_registracije.txt).
+
+
+====================================================================================================
+14. POJMOVNIK
+====================================================================================================
+
+  AO               autoodgovornost (obavezno osiguranje od autoodgovornosti)
+  AMK              naknada Auto-moto kluba (pretpostavka; potvrditi)
+  Putarina         naknada po zapremini motora ili najvećoj dopuštenoj masi (Službene novine FBiH,
+                   br. 09/2016, naslov na prvom listu tabela)
+  NDM              najveća dopuštena masa
+  N1, N2, N3       kategorije teretnih vozila po masi (N1 do 3.500 kg, N2 3.501-12.000 kg,
+                   N3 preko 12.000 kg)
+  M2, M3           kategorije autobusa
+  Bonus/malus      popust/doplata na premiju prema šteti u prethodnom periodu
+  Premijski razred P14 ... P1 u tabeli 16 (malus P14-P7, osnovni P6, bonus P5-P1)
+  Urnik            obrazac koji se popunjava
+  JMBG / ID        jedinstveni matični broj građana
+  LK               lična karta
+  Oldtajmer        vozilo starije od 30 godina (posebna stavka u tabelama 12-15)
+  Tehnički pregled obavezni pregled ispravnosti vozila (fiksna naknada 91 KM)
+
+
+====================================================================================================
+15. PREDLOŽENA STRUKTURA SRS DOKUMENTA I GDJE NAĆI MATERIJAL
+====================================================================================================
+
+  SRS poglavlje                        Gdje u ovom dokumentu
+  -----------------------------------  ------------------------------------------------------
+  1. Uvod, svrha, opseg                odjeljci 1, 3
+  2. Opšti opis, korisnici, ograničenja odjeljci 2, 9, 10, 11
+  3. Funkcionalni zahtjevi             odjeljci 4, 5, 6, 7
+  4. Podaci (ER, rječnik podataka)     odjeljak 7 (+ ER dijagram u VPP-u)
+  5. Use case model                    odjeljak 8 (+ use case dijagram u VPP-u)
+  6. Nefunkcionalni zahtjevi           odjeljak 10
+  7. Deployment/arhitektura            odjeljak 9 (+ ažurirati deployment dijagram u VPP-u)
+  8. Pretpostavke i zavisnosti         oznake [PRETPOSTAVKA] i odjeljak 12
+  9. Otvorena pitanja                  odjeljak 13
+  Prilozi                              tabele (Tabele_kalkulator_registracije.txt), obrasci (PDF)
+
+
+====================================================================================================
+Kraj dokumenta
+====================================================================================================
