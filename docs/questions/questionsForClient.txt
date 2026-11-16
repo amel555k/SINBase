@@ -1,0 +1,9 @@
+PITANJA ZA KLIJENTA 
+
+1. Pitanje: Šta se računa za vozila iznad 4000 cm3 (tabele zaštite okoline završavaju na 4000)?
+2. Pitanje: Vrijednosti reda "iznad 30 (oldtajmeri)" su tačno 1/16 reda "iznad 30 godina" (24,00 -> 1,50; 28,80 -> 1,80). Je li to fiksni iznos, dodatak po godini ili nešto treće?
+3. Pitanje: Putarina (tabele 1-11): koristi li se kolona "Ukupno" ili podjela 60%/40%, i šta ta podjela znači?
+4. Pitanje: Zaštita okoline: jesu li to tabele 12-15? Vrijede li i za teretna vozila (tabele postoje samo za putnička)?
+5. Pitanje: Značenje reda "iznad 30 (oldtajmeri)" u tabelama 12-15 (1,35 / 1,43 / 1,50 / 1,80 KM): fiksni iznos ili dodatak po godini?
+6. Pitanje: Polisa AO: kako se bira premijski razred (P14-P1)? Unosi li ga korisnik ručno i je li iznos u KM?
+7. Pitanje: Teretna vozila: koja je uloga polja kilovati, kubikaža i godište kada se putarina traži po najvećoj dopuštenoj masi?
