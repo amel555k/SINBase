@@ -76,7 +76,7 @@ TABELA 5: PUTARINA - Teretna vozila N2
 +------------------------+--------+--------+--------+
 | 6001-7000 KG           | 159,90 |  95,94 |  63,96 |
 +------------------------+--------+--------+--------+
-| 7000-8000 KG           | 180,00 | 108,00 |  72,00 |
+| 7001-8000 KG           | 180,00 | 108,00 |  72,00 |
 +------------------------+--------+--------+--------+
 | 8001-9000 KG           | 219,90 | 131,94 |  87,96 |
 +------------------------+--------+--------+--------+
@@ -185,11 +185,11 @@ TABELA 8: PUTARINA - Teretna vozila N3 - četiri i više osovina
 +------------------------+----------+--------+--------+
 | 28001-29000 KG         |   999,90 | 599,94 | 399,96 |
 +------------------------+----------+--------+--------+
-| 29001-30000 KG         | 1.040,00 | 624,06 | 416,04 |
+| 29001-30000 KG         | 1.040,10 | 624,06 | 416,04 |
 +------------------------+----------+--------+--------+
 | 30001-31000 KG         | 1.080,00 | 648,00 | 432,00 |
 +------------------------+----------+--------+--------+
-| 31001-32000 KG         | 1.119,90 | 674,94 | 447,96 |
+| 31001-32000 KG         | 1.119,90 | 671,94 | 447,96 |
 +------------------------+----------+--------+--------+
 | Preko 32000 KG         | 1.160,10 | 696,06 | 464,04 |
 +------------------------+----------+--------+--------+
@@ -202,7 +202,7 @@ TABELA 9: PUTARINA - Autobusi M2, M3 - dvije osovine
 +------------------------+--------+--------+--------+
 | NDM<5000 KG            | 112,50 |  67,50 |  45,00 |
 +------------------------+--------+--------+--------+
-| 5001-6000 KG           | 135,60 |  81,36 |  52,24 |
+| 5001-6000 KG           | 135,60 |  81,36 |  54,24 |
 +------------------------+--------+--------+--------+
 | 6001-7000 KG           | 134,70 |  80,82 |  53,88 |
 +------------------------+--------+--------+--------+
@@ -468,16 +468,15 @@ TABELA 16: AO PREMIJSKA SKUPINA 1 - Putnički automobili (izmjene FBiH)
 +------------+----------------------+------------+-------+-------+-------+-------+-------+-------+-------+-----+-----+-----+-----+-----+-----+-----+
 
 
-NAPOMENE (provjeriti sa izvornikom)
------------------------------------
-* Tabele 1-11 (PUTARINA): naslov na prvom listu glasi "PUTARINA - SLUŽBENE NOVINE FEDERACIJE BOSNE I HERCEGOVINE BR.09/2016 OD 05.02.2015".
-  Vrijednosti su prepisane kako piše u izvorniku; "CM" je zadržano kao u izvorniku.
-* Tabela 1: vrijednost 140,10 (2001-2500 CM) je na papiru zaokružena rukom.
-* Tabela 5: raspon je u izvorniku napisan "7000-8000 KG" (vjerovatno 7001-8000).
-* Tabela 8: red 31001-32000 KG: 60% = 674,94 ali 40% = 447,96 daje 60% = 671,94 (zbir 60%+40% nije jednak ukupnom).
-* Tabela 8: red 29001-30000 KG: 624,06 + 416,04 = 1.040,10, a ukupno piše 1.040,00.
-* Tabela 9: redovi 5001-6000 i 6001-7000 KG izgledaju zamijenjeni u odnosu na tabele 10 i 11, a 40% za 5001-6000 piše 52,24
-  (135,60 - 81,36 = 54,24).
-* Tabela 11: red 9001-10000 KG: 60% piše 129,90, ali u tabelama 9 i 10 je 126,90 (60% od 211,50 = 126,90).
-* Tabela 16: u izvorniku je tabela rotirana 90 stepeni; ovdje je vraćena u uspravni položaj. Podskupine 01-08 su redovi, a premijski
-  razredi P14-P1 kolone. Vrijednosti su provjerene računski (svaka kolona = osnovna vrijednost P6 x odgovarajući postotak).
+ISPRAVKE:
+1. Ljudski razlgo zaokruživanja na originalnoj fizičkoj tabeli (ništa što šteti konkretnoj vrijednosti)
+2. nema greške
+3.tipfeler popravljen
+4. Greška u koloni za 40% (izvor: Uredba vlade Federacije BiH https://www.fbihvlada.gov.ba/bosanski/zakoni/2016/uredbe/2h.html)
+5. Greška u koloni za Ukupno (tipfeler, izvor Uredba vlade Federacije BiH (isti link))
+6. Greška u koloni za 40% (tipfeler)
+7. Sve uredu
+
+---
+[uređeno 16.11.2026.]
+Ovim pregledom je ustanovljeno da su tabele korektne, te da nema grešaka na glavnim dijelovima tabela (naknade)

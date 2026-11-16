@@ -6,4 +6,4 @@ Stiker: 5KM
 Saobračajna Iskaznica: 5KM
 Bankovna provizija: 15KM
 Tehnički pregled: 91KM
-AMK: 8KM (putničko vozilo); 15KM (teretno vozilo)
+AMK: 9KM (putničko vozilo); 15KM (teretno vozilo)
