@@ -1,398 +1,46 @@
--- =====================================================================
--- SIN Base - seed podaci (SQLite)                   docs/arhitektura/
--- Odgovara Flyway migraciji V2__seed_zakonski_podaci.sql.
--- Generisano iz Tabele_kalkulator_registracije.txt i FiksneNaknade.txt
--- (pregled tabela 16.11.2026.). Iznosi su u feninzima (12,15 KM = 1215).
--- Izvor putarine: Službene novine FBiH, br. 09/2016.
---
--- NAPOMENE O IZVORU
---  * Tabela 11, razred 9001-10000 kg: u izvornom tekstu kolona 60% je
---    129,90, a Ukupno 211,50 i 40% 84,60 daju 126,90 (isti razred u tabelama
---    9 i 10 ima 126,90). Seed sadrži 126,90 (12690). Potvrditi s Uredbom.
---  * Tabele 10 i 11 imaju razrede 5001-6000 i 6001-7000 kg zamijenjene u
---    odnosu na tabelu 9 (135,60/134,70 naspram 134,70/135,60). Prepisano kako
---    piše u izvoru, aritmetički je ispravno u svim tabelama. Potvrditi.
---  * Razred "NDM<5000 KG" (tabele 9-11) seedan je kao 0-5000 kg jer sljedeći
---    razred počinje od 5001.
--- =====================================================================
+# ADR-001: Izbor ugrađene baze podataka i strategija migracija
 
--- Postavke
-INSERT INTO postavke (kljuc, vrijednost, opis) VALUES
-  ('prag_upozorenja_dana', '20', 'Broj dana prije isteka registracije kad se red oboji i prikaže obavještenje'),
-  ('rezim_prikaza', '0', '0 = dnevni, 1 = noćni');
+- **Status:** Prihvaćeno
+- **Datum:** 2026-11-17
+- **Povezani dokumenti:** SRS v1.1 (poglavlja 4, 5, 6, 8 i 13), `schema.sql`, `V2__seed_zakonski_podaci.sql`
 
--- Fiksne naknade (FiksneNaknade.txt; zbir osam naknada 181 KM, AMK putničko 9 KM, teretno 15 KM)
-INSERT INTO fiksna_naknada (kod, naziv, vrsta_vozila, iznos_fening, zadani_iznos_fening, redoslijed) VALUES
-  ('taksa', 'Taksa', NULL, 2000, 2000, 1),
-  ('voda', 'Voda', NULL, 2000, 2000, 2),
-  ('potvrda_o_vlasnistvu', 'Potvrda o vlasništvu', NULL, 500, 500, 3),
-  ('registarske_tablice', 'Registarske tablice', NULL, 2000, 2000, 4),
-  ('stiker', 'Stiker', NULL, 500, 500, 5),
-  ('saobracajna_iskaznica', 'Saobraćajna iskaznica', NULL, 500, 500, 6),
-  ('bankovna_provizija', 'Bankovna provizija', NULL, 1500, 1500, 7),
-  ('tehnicki_pregled', 'Tehnički pregled', NULL, 9100, 9100, 8),
-  ('amk_putnicko', 'AMK, putničko vozilo', 0, 900, 900, 9),
-  ('amk_teretno', 'AMK, teretno vozilo', 1, 1500, 1500, 10);
+## 1. Kontekst
+SIN Base je samostalna JavaFX desktop aplikacija za Windows 10 (64-bit) koja radi potpuno offline, bez centralnog servera i mrežne sinhronizacije (NFR-01, NFR-03). Zbog jednokratne lokalne instalacije (jpackage/jlink) i potrebe za jednostavnim automatskim rezervnim kopijama (NFR-02, NFR-04), Docker i PostgreSQL iz ranijeg prijedloga su odbačeni u korist ugrađene (embedded) relacione baze podataka.
 
--- Putarina: zaglavlja tabela 1-11
-INSERT INTO putarina_tabela (tabela_br, naziv, kategorija, pogon_grupa, broj_osovina) VALUES
-  (1, 'Putnički automobili', 0, 0, NULL),
-  (2, 'Putnički automobili na LPG/CNG i hibride', 0, 1, NULL),
-  (3, 'Teretna vozila N1', 1, 0, NULL),
-  (4, 'Teretna vozila N1 na LPG/CNG i hibride', 1, 1, NULL),
-  (5, 'Teretna vozila N2', 2, NULL, NULL),
-  (6, 'Teretna vozila N3 - dvije osovine', 3, NULL, 2),
-  (7, 'Teretna vozila N3 - tri osovine', 3, NULL, 3),
-  (8, 'Teretna vozila N3 - četiri i više osovina', 3, NULL, 4),
-  (9, 'Autobusi M2, M3 - dvije osovine', 4, NULL, 2),
-  (10, 'Autobusi M2, M3 - tri osovine', 4, NULL, 3),
-  (11, 'Autobusi M2, M3 - četiri osovine', 4, NULL, 4);
+## 2. Razmatrane opcije: SQLite vs H2
 
--- Putarina: razredi (tabela_br, raspon_od, raspon_do, ukupno, 60%, 40%)
-INSERT INTO putarina_razred (tabela_br, raspon_od, raspon_do, ukupno_fening, dio60_fening, dio40_fening) VALUES
-  (1, 0, 1000, 4800, 2880, 1920),
-  (1, 1001, 1600, 6000, 3600, 2400),
-  (1, 1601, 2000, 7500, 4500, 3000),
-  (1, 2001, 2500, 14010, 8406, 5604),
-  (1, 2501, NULL, 21000, 12600, 8400),
-  (2, 0, 1000, 6000, 3600, 2400),
-  (2, 1001, 1600, 7500, 4500, 3000),
-  (2, 1601, 2000, 9375, 5625, 3750),
-  (2, 2001, 2500, 17515, 10509, 7006),
-  (2, 2501, NULL, 26250, 15750, 10500),
-  (3, 0, 1000, 5490, 3294, 2196),
-  (3, 1001, 2000, 8100, 4860, 3240),
-  (3, 2001, 3000, 10500, 6300, 4200),
-  (3, 3001, 3500, 11760, 7056, 4704),
-  (4, 0, 1000, 6860, 4116, 2744),
-  (4, 1001, 2000, 10125, 6075, 4050),
-  (4, 2001, 3000, 13125, 7875, 5250),
-  (4, 3001, 3500, 14700, 8820, 5880),
-  (5, 3501, 5000, 12000, 7200, 4800),
-  (5, 5001, 6000, 14010, 8406, 5604),
-  (5, 6001, 7000, 15990, 9594, 6396),
-  (5, 7001, 8000, 18000, 10800, 7200),
-  (5, 8001, 9000, 21990, 13194, 8796),
-  (5, 9001, 10000, 24990, 14994, 9996),
-  (5, 10001, 11000, 28500, 17100, 11400),
-  (5, 11001, 12000, 32010, 19206, 12804),
-  (6, 12001, 13000, 36000, 21600, 14400),
-  (6, 13001, 14000, 39990, 23994, 15996),
-  (6, 14001, 15000, 44010, 26406, 17604),
-  (6, 15001, 16000, 48000, 28800, 19200),
-  (6, 16001, 17000, 51990, 31194, 20796),
-  (6, 17001, 18000, 56010, 33606, 22404),
-  (6, 18001, NULL, 60000, 36000, 24000),
-  (7, 12001, 13000, 35700, 21420, 14280),
-  (7, 13001, 14000, 39690, 23814, 15876),
-  (7, 14001, 15000, 43710, 26226, 17484),
-  (7, 15001, 16000, 47700, 28620, 19080),
-  (7, 16001, 17000, 51690, 31014, 20676),
-  (7, 17001, 18000, 55710, 33426, 22284),
-  (7, 18001, 19000, 59700, 35820, 23880),
-  (7, 19001, 20000, 63690, 38214, 25476),
-  (7, 20001, 21000, 67710, 40626, 27084),
-  (7, 21001, 22000, 71700, 43020, 28680),
-  (7, 22001, 23000, 75690, 45414, 30276),
-  (7, 23001, 24000, 79710, 47826, 31884),
-  (7, 24001, 25000, 84000, 50400, 33600),
-  (7, 25001, 26000, 87990, 52794, 35196),
-  (7, 26001, NULL, 92000, 55200, 36800),
-  (8, 12001, 13000, 35700, 21420, 14280),
-  (8, 13001, 14000, 39690, 23814, 15876),
-  (8, 14001, 15000, 43710, 26226, 17484),
-  (8, 15001, 16000, 47700, 28620, 19080),
-  (8, 16001, 17000, 51690, 31014, 20676),
-  (8, 17001, 18000, 55710, 33426, 22284),
-  (8, 18001, 19000, 59700, 35820, 23880),
-  (8, 19001, 20000, 63690, 38214, 25476),
-  (8, 20001, 21000, 67710, 40626, 27084),
-  (8, 21001, 22000, 71700, 43020, 28680),
-  (8, 22001, 23000, 75690, 45414, 30276),
-  (8, 23001, 24000, 79710, 47826, 31884),
-  (8, 24001, 25000, 84000, 50400, 33600),
-  (8, 25001, 26000, 87990, 52794, 35196),
-  (8, 26001, 27000, 92010, 55206, 36804),
-  (8, 27001, 28000, 96000, 57600, 38400),
-  (8, 28001, 29000, 99990, 59994, 39996),
-  (8, 29001, 30000, 104010, 62406, 41604),
-  (8, 30001, 31000, 108000, 64800, 43200),
-  (8, 31001, 32000, 111990, 67194, 44796),
-  (8, 32001, NULL, 116010, 69606, 46404),
-  (9, 0, 5000, 11250, 6750, 4500),
-  (9, 5001, 6000, 13560, 8136, 5424),
-  (9, 6001, 7000, 13470, 8082, 5388),
-  (9, 7001, 8000, 14670, 8802, 5868),
-  (9, 8001, 9000, 18540, 11124, 7416),
-  (9, 9001, 10000, 21150, 12690, 8460),
-  (9, 10001, 11000, 21570, 12942, 8628),
-  (9, 11001, 12000, 25860, 15516, 10344),
-  (9, 12001, 13000, 26340, 15804, 10536),
-  (9, 13001, 14000, 27390, 16434, 10956),
-  (9, 14001, 15000, 29940, 17964, 11976),
-  (9, 15001, 16000, 30270, 18162, 12108),
-  (9, 16001, 17000, 30570, 18342, 12228),
-  (9, 17001, 18000, 31350, 18810, 12540),
-  (9, 18001, NULL, 32610, 19566, 13044),
-  (10, 0, 5000, 11250, 6750, 4500),
-  (10, 5001, 6000, 13470, 8082, 5388),
-  (10, 6001, 7000, 13560, 8136, 5424),
-  (10, 7001, 8000, 14670, 8802, 5868),
-  (10, 8001, 9000, 18540, 11124, 7416),
-  (10, 9001, 10000, 21150, 12690, 8460),
-  (10, 10001, 11000, 21570, 12942, 8628),
-  (10, 11001, 12000, 25860, 15516, 10344),
-  (10, 12001, 13000, 26340, 15804, 10536),
-  (10, 13001, 14000, 27390, 16434, 10956),
-  (10, 14001, 15000, 29940, 17964, 11976),
-  (10, 15001, 16000, 30270, 18162, 12108),
-  (10, 16001, 17000, 30570, 18342, 12228),
-  (10, 17001, 18000, 31350, 18810, 12540),
-  (10, 18001, 19000, 32610, 19566, 13044),
-  (10, 19001, 20000, 33450, 20070, 13380),
-  (10, 20001, 21000, 34260, 20556, 13704),
-  (10, 21001, 22000, 36330, 21798, 14532),
-  (10, 22001, 23000, 37800, 22680, 15120),
-  (10, 23001, 24000, 39750, 23850, 15900),
-  (10, 24001, 25000, 40410, 24246, 16164),
-  (10, 25001, 26000, 41670, 25002, 16668),
-  (10, 26001, NULL, 50100, 30060, 20040),
-  (11, 0, 5000, 11250, 6750, 4500),
-  (11, 5001, 6000, 13470, 8082, 5388),
-  (11, 6001, 7000, 13560, 8136, 5424),
-  (11, 7001, 8000, 14670, 8802, 5868),
-  (11, 8001, 9000, 18540, 11124, 7416),
-  (11, 9001, 10000, 21150, 12690, 8460),  -- ispravljeno iz 129,90 (vidi napomenu na vrhu)
-  (11, 10001, 11000, 21570, 12942, 8628),
-  (11, 11001, 12000, 25860, 15516, 10344),
-  (11, 12001, 13000, 26340, 15804, 10536),
-  (11, 13001, 14000, 27390, 16434, 10956),
-  (11, 14001, 15000, 29940, 17964, 11976),
-  (11, 15001, 16000, 30270, 18162, 12108),
-  (11, 16001, 17000, 30570, 18342, 12228),
-  (11, 17001, 18000, 31350, 18810, 12540),
-  (11, 18001, 19000, 32610, 19566, 13044),
-  (11, 19001, 20000, 33450, 20070, 13380),
-  (11, 20001, 21000, 34260, 20556, 13704),
-  (11, 21001, 22000, 36330, 21798, 14532),
-  (11, 22001, 23000, 37800, 22680, 15120),
-  (11, 23001, 24000, 39750, 23850, 15900),
-  (11, 24001, 25000, 40410, 24246, 16164),
-  (11, 25001, 26000, 41670, 25002, 16668),
-  (11, 26001, 27000, 50100, 30060, 20040),
-  (11, 27001, 28000, 53100, 31860, 21240),
-  (11, 28001, 29000, 56100, 33660, 22440),
-  (11, 29001, 30000, 59100, 35460, 23640),
-  (11, 30001, 31000, 62100, 37260, 24840),
-  (11, 31001, 32000, 65100, 39060, 26040),
-  (11, 32001, NULL, 68100, 40860, 27240);
+| Kriterij | SQLite (`sqlite-jdbc`) | H2 Database |
+| :--- | :--- | :--- |
+| **Pohrana podataka** | Jedan prenosivi fajl (`sinbase.db`) | Jedan fajl (`.mv.db`), osjetljiv na verziju drajvera |
+| **Backup i oporavak** | Trivijalno kopiranje/rotacija fajla pri zatvaranju | Zahtijeva poseban SQL `BACKUP` ili gašenje konekcije |
+| **Uvid izvan aplikacije** | Bilo koji SQLite alat (npr. DB Browser) bez Jave | Zahtijeva pokretanje JVM procesa / H2 konzole |
+| **Tipizacija podataka** | Slaba po defaultu, ali rješiva uz `STRICT` tabele (3.37+) | Stroga SQL tipizacija |
+| **Zavisnosti i portabilnost** | Ugrađen native binarni kod za Windows x64 u JAR-u | Čista Java (bez native biblioteka) |
 
--- Zaštita okoline: tabele 12-15 (tabela_br, zapremina_od/do, starost_od/do, oldtajmer, gorivo 0 dizel / 1 benzin, iznos)
-INSERT INTO zastita_okoline (tabela_br, zapremina_od, zapremina_do, starost_od, starost_do, oldtajmer, gorivo, iznos_fening) VALUES
-  (12, 251, 750, 0, 5, 0, 0, 1215),
-  (12, 251, 750, 0, 5, 0, 1, 1215),
-  (12, 251, 750, 6, 8, 0, 0, 1283),
-  (12, 251, 750, 6, 8, 0, 1, 1283),
-  (12, 251, 750, 9, 10, 0, 0, 1350),
-  (12, 251, 750, 9, 10, 0, 1, 1350),
-  (12, 251, 750, 11, 15, 0, 0, 1480),
-  (12, 251, 750, 11, 15, 0, 1, 1480),
-  (12, 251, 750, 16, 20, 0, 0, 1620),
-  (12, 251, 750, 16, 20, 0, 1, 1620),
-  (12, 251, 750, 21, 30, 0, 0, 1890),
-  (12, 251, 750, 21, 30, 0, 1, 1890),
-  (12, 251, 750, 31, NULL, 0, 0, 2160),
-  (12, 251, 750, 31, NULL, 0, 1, 2160),
-  (12, 251, 750, 31, NULL, 1, 0, 135),
-  (12, 251, 750, 31, NULL, 1, 1, 135),
-  (13, 751, 1400, 0, 5, 0, 0, 1283),
-  (13, 751, 1400, 0, 5, 0, 1, 1283),
-  (13, 751, 1400, 6, 8, 0, 0, 1355),
-  (13, 751, 1400, 6, 8, 0, 1, 1355),
-  (13, 751, 1400, 9, 10, 0, 0, 1425),
-  (13, 751, 1400, 9, 10, 0, 1, 1425),
-  (13, 751, 1400, 11, 15, 0, 0, 1568),
-  (13, 751, 1400, 11, 15, 0, 1, 1568),
-  (13, 751, 1400, 16, 20, 0, 0, 1710),
-  (13, 751, 1400, 16, 20, 0, 1, 1710),
-  (13, 751, 1400, 21, 30, 0, 0, 1995),
-  (13, 751, 1400, 21, 30, 0, 1, 1995),
-  (13, 751, 1400, 31, NULL, 0, 0, 2280),
-  (13, 751, 1400, 31, NULL, 0, 1, 2280),
-  (13, 751, 1400, 31, NULL, 1, 0, 143),
-  (13, 751, 1400, 31, NULL, 1, 1, 143),
-  (14, 1401, 2000, 0, 5, 0, 0, 1350),
-  (14, 1401, 2000, 0, 5, 0, 1, 1350),
-  (14, 1401, 2000, 6, 8, 0, 0, 1425),
-  (14, 1401, 2000, 6, 8, 0, 1, 1425),
-  (14, 1401, 2000, 9, 10, 0, 0, 1500),
-  (14, 1401, 2000, 9, 10, 0, 1, 1500),
-  (14, 1401, 2000, 11, 15, 0, 0, 1650),
-  (14, 1401, 2000, 11, 15, 0, 1, 1650),
-  (14, 1401, 2000, 16, 20, 0, 0, 1800),
-  (14, 1401, 2000, 16, 20, 0, 1, 1800),
-  (14, 1401, 2000, 21, 30, 0, 0, 2100),
-  (14, 1401, 2000, 21, 30, 0, 1, 2100),
-  (14, 1401, 2000, 31, NULL, 0, 0, 2400),
-  (14, 1401, 2000, 31, NULL, 0, 1, 2400),
-  (14, 1401, 2000, 31, NULL, 1, 0, 150),
-  (14, 1401, 2000, 31, NULL, 1, 1, 150),
-  (15, 2001, 4000, 0, 5, 0, 0, 1620),
-  (15, 2001, 4000, 0, 5, 0, 1, 1620),
-  (15, 2001, 4000, 6, 8, 0, 0, 1710),
-  (15, 2001, 4000, 6, 8, 0, 1, 1710),
-  (15, 2001, 4000, 9, 10, 0, 0, 1800),
-  (15, 2001, 4000, 9, 10, 0, 1, 1800),
-  (15, 2001, 4000, 11, 15, 0, 0, 1980),
-  (15, 2001, 4000, 11, 15, 0, 1, 1980),
-  (15, 2001, 4000, 16, 20, 0, 0, 2160),
-  (15, 2001, 4000, 16, 20, 0, 1, 2160),
-  (15, 2001, 4000, 21, 30, 0, 0, 2520),
-  (15, 2001, 4000, 21, 30, 0, 1, 2520),
-  (15, 2001, 4000, 31, NULL, 0, 0, 2880),
-  (15, 2001, 4000, 31, NULL, 0, 1, 2880),
-  (15, 2001, 4000, 31, NULL, 1, 0, 180),
-  (15, 2001, 4000, 31, NULL, 1, 1, 180);
+**Razlozi odbacivanja H2:** Iako je H2 pisan u čistoj Javi, historijski je imao nekompatibilnosti formata fajla između različitih verzija drajvera, što otežava dugoročno održavanje lokalne baze kod klijenta. Također, pregled i hitna popravka podataka kod klijenta zahtijevaju Java okruženje.
 
--- AO premija: podskupine (kW), osnovni postotak x100
-INSERT INTO ao_podskupina (podskupina, kw_preko, kw_do, osnovni_postotak_x100) VALUES
-  (1, 0, 22, 5810),
-  (2, 22, 33, 8290),
-  (3, 33, 44, 10000),
-  (4, 44, 55, 11630),
-  (5, 55, 66, 13260),
-  (6, 66, 84, 14600),
-  (7, 84, 110, 17470),
-  (8, 110, NULL, 20990);
+## 3. Odluka
+Odabran je **SQLite** (putem `sqlite-jdbc` drajvera), uz lokaciju baze u `%LOCALAPPDATA%\SinBase\sinbase.db`.
 
--- AO premija: premijski razredi (P14 malus ... P6 osnovni ... P1 bonus)
-INSERT INTO ao_razred (razred, tip, postotak) VALUES
-  (14, 0, 100),
-  (13, 0, 80),
-  (12, 0, 60),
-  (11, 0, 50),
-  (10, 0, 40),
-  (9, 0, 30),
-  (8, 0, 20),
-  (7, 0, 10),
-  (6, 1, 0),
-  (5, 2, 10),
-  (4, 2, 20),
-  (3, 2, 30),
-  (2, 2, 40),
-  (1, 2, 50);
+Ključni razlozi za odluku:
+1. **Jednostavan backup i integritet:** Jedan fajl omogućava pouzdanu rotaciju rezervnih kopija pri zatvaranju aplikacije i ugrađenu provjeru integriteta (`PRAGMA integrity_check`).
+2. **Stroga kontrola podataka bez dodatnih tabela:** Korištenjem `STRICT` tabela (SQLite >= 3.37) i `CHECK` ograničenja postiže se sigurnost tipova (cijeli brojevi za feninge i enume, validni ISO-8601 datumi `YYYY-MM-DD`).
+3. **Mogućnost naknadne enkripcije:** U slučaju potrebe za dodatnom zaštitom ličnih podataka (NFR-08), prelazak na SQLCipher ne zahtijeva promjenu šeme ni SQL upita.
+4. **Napomena za konekciju:** Aplikacija mora otvarati svaku konekciju uz `PRAGMA foreign_keys=ON` (`jdbc:sqlite:<putanja>?foreign_keys=on`) kako bi se provodili strani ključevi.
 
--- AO premija: iznosi (podskupina, razred, iznos u feninzima; tabela 16 je u KM)
-INSERT INTO ao_premija (podskupina, razred, iznos_fening) VALUES
-  (1, 14, 48800),
-  (1, 13, 43900),
-  (1, 12, 39000),
-  (1, 11, 36600),
-  (1, 10, 34200),
-  (1, 9, 31700),
-  (1, 8, 29300),
-  (1, 7, 26800),
-  (1, 6, 24400),
-  (1, 5, 22000),
-  (1, 4, 19500),
-  (1, 3, 17100),
-  (1, 2, 14600),
-  (1, 1, 12200),
-  (2, 14, 69800),
-  (2, 13, 62800),
-  (2, 12, 55800),
-  (2, 11, 52400),
-  (2, 10, 48900),
-  (2, 9, 45400),
-  (2, 8, 41900),
-  (2, 7, 38400),
-  (2, 6, 34900),
-  (2, 5, 31400),
-  (2, 4, 27900),
-  (2, 3, 24400),
-  (2, 2, 20900),
-  (2, 1, 17500),
-  (3, 14, 84200),
-  (3, 13, 75800),
-  (3, 12, 67400),
-  (3, 11, 63200),
-  (3, 10, 58900),
-  (3, 9, 54700),
-  (3, 8, 50500),
-  (3, 7, 46300),
-  (3, 6, 42100),
-  (3, 5, 37900),
-  (3, 4, 33700),
-  (3, 3, 29500),
-  (3, 2, 25300),
-  (3, 1, 21100),
-  (4, 14, 97800),
-  (4, 13, 88000),
-  (4, 12, 78200),
-  (4, 11, 73400),
-  (4, 10, 68500),
-  (4, 9, 63600),
-  (4, 8, 58700),
-  (4, 7, 53800),
-  (4, 6, 48900),
-  (4, 5, 44000),
-  (4, 4, 39100),
-  (4, 3, 34200),
-  (4, 2, 29300),
-  (4, 1, 24500),
-  (5, 14, 111600),
-  (5, 13, 100400),
-  (5, 12, 89300),
-  (5, 11, 83700),
-  (5, 10, 78100),
-  (5, 9, 72500),
-  (5, 8, 67000),
-  (5, 7, 61400),
-  (5, 6, 55800),
-  (5, 5, 50200),
-  (5, 4, 44600),
-  (5, 3, 39100),
-  (5, 2, 33500),
-  (5, 1, 27900),
-  (6, 14, 122800),
-  (6, 13, 110500),
-  (6, 12, 98200),
-  (6, 11, 92100),
-  (6, 10, 86000),
-  (6, 9, 79800),
-  (6, 8, 73700),
-  (6, 7, 67500),
-  (6, 6, 61400),
-  (6, 5, 55300),
-  (6, 4, 49100),
-  (6, 3, 43000),
-  (6, 2, 36800),
-  (6, 1, 30700),
-  (7, 14, 147000),
-  (7, 13, 132300),
-  (7, 12, 117600),
-  (7, 11, 110300),
-  (7, 10, 102900),
-  (7, 9, 95600),
-  (7, 8, 88200),
-  (7, 7, 80900),
-  (7, 6, 73500),
-  (7, 5, 66200),
-  (7, 4, 58800),
-  (7, 3, 51500),
-  (7, 2, 44100),
-  (7, 1, 36800),
-  (8, 14, 176600),
-  (8, 13, 158900),
-  (8, 12, 141300),
-  (8, 11, 132500),
-  (8, 10, 123600),
-  (8, 9, 114800),
-  (8, 8, 106000),
-  (8, 7, 97100),
-  (8, 6, 88300),
-  (8, 5, 79500),
-  (8, 4, 70600),
-  (8, 3, 61800),
-  (8, 2, 53000),
-  (8, 1, 44200);
+## 4. Plan migracija (Flyway)
+Upravljanje verzijama baze vrši se automatski pri pokretanju aplikacije putem alata **Flyway**:
+- **`V1__sema.sql`:** Kreira strukturu svih tabela (`stranka`, `postavke`, `fiksna_naknada`, tabele putarine, zaštite okoline i AO premije), `STRICT` pravila, `CHECK` ograničenja i indekse za pretragu i upozorenja o isteku.
+- **`V2__seed_zakonski_podaci.sql`:** Puni početne postavke (`prag_upozorenja_dana = 20`, `rezim_prikaza = 0`), podrazumijevane fiksne naknade i referentne zakonske tabele (tabele 1–16).
+- **Buduće izmjene (`V3__*.sql`):** Svaka naknadna izmjena zakonskih tarifa ili strukture dodaje se kao nova migracija (`V3`, `V4`...), čime se čuvaju postojeći zapisi stranaka i korisničke postavke (NFR-12).
+
+## 5. Uticaj otvorenih pitanja klijenta (šta se mijenja ako odgovori drugačije)
+- **Osiguravajuće kuće — GRAWE i TRIGLAV (SRS pitanje 10):** Šema trenutno dozvoljava kodove `0–4` (ASA, EUROHERC, EUROS, GRAWE, TRIGLAV). Ako klijent potvrdi da radi isključivo s prve tri kuće, `CHECK` ograničenje u tabeli `stranka` sužava se na `IN (0, 1, 2)` (u `V1` prije produkcije ili kroz novu migraciju rekreiranjem tabele), a suvišne vrijednosti se uklanjaju iz Java enuma. Ako se naknadno doda nova kuća, `CHECK` lista se proširuje.
+- **Obnova polise / Primarni ključ (SRS pitanje 11):** `broj_polise` je trenutno primarni ključ (svaka obnova je novi red). Ako klijent zatraži praćenje historije polisa po klijentu ili unos zapisa bez poznatog broja polise, uvodi se surogatni ključ `id INTEGER PRIMARY KEY AUTOINCREMENT`, dok `broj_polise` ostaje `UNIQUE`.
+- **Putarina: Ukupno vs 60%/40% (SRS pitanje 1):** Tabela `putarina_razred` već čuva sve tri kolone (`ukupno_fening`, `dio60_fening`, `dio40_fening`), pa drugačiji odgovor klijenta ne mijenja šemu baze, već samo kolonu koju čita servis kalkulatora.
+- **Dodatne kategorije i zapremine > 4000 cm³ (SRS pitanja 2, 5, 17):** Ako klijent potvrdi obračun zaštite okoline za teretna vozila ili zapremine iznad 4000 cm³, dodaju se novi redovi kroz `V3` seed migraciju (uz eventualno proširenje `CHECK (tabela_br ...)` ako se uvode nove tabele).
+- **Izmjena zakonskih tabela iz Postavki (SRS pitanje 13):** Zakonske tabele su trenutno tretirane kao read-only seed podaci. Ako klijent zatraži njihovo uređivanje kroz UI, struktura tabela ostaje ista, a aplikaciji se dodaje forma za `UPDATE` postojećih redova.
+
+## 6. Posljedice
+- **Pozitivne:** Nulta konfiguracija za krajnjeg korisnika, brz lokalni rad, lak backup i potpuna sljedivost izmjena šeme kroz Flyway.
+- **Negativne / Ograničenja:** SQLite ima ograničenu podršku za `ALTER TABLE` (npr. izmjena `CHECK` ograničenja zahtijeva kreiranje nove tabele i kopiranje podataka u Flyway skripti), te ne podržava višekorisnički istovremeni upis preko mreže (što je u skladu s ograničenjima sistema).
