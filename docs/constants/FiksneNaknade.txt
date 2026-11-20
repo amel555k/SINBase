@@ -5,5 +5,5 @@ Registarske tablice: 20KM
 Stiker: 5KM
 Saobračajna Iskaznica: 5KM
 Bankovna provizija: 15KM
-Tehnički pregled: 91KM
-AMK: 9KM (putničko vozilo); 15KM (teretno vozilo)
+Tehnički pregled: 91KM (dizel vozila); 87 KM (benzin vozila); 55KM (EV / hibrid / LPG);
+AMK: 8KM (putničko vozilo); 15KM (teretno vozilo);
